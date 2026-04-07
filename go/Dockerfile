@@ -7,5 +7,5 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o pixelpong .
 
 FROM scratch
 COPY --from=builder /app/pixelpong /pixelpong
-EXPOSE 4432
+EXPOSE 4442
 ENTRYPOINT ["/pixelpong"]

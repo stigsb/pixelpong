@@ -25,7 +25,7 @@ func ParseConfig() Config {
 	flag.Parse()
 
 	if cfg.Port == 0 {
-		cfg.Port = envInt("PONG_PORT", 4432)
+		cfg.Port = envInt("PONG_PORT", 4442)
 	}
 	if cfg.BindAddr == "" {
 		cfg.BindAddr = envString("PONG_BIND_ADDR", "0.0.0.0")
