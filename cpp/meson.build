@@ -14,6 +14,7 @@ pixelpong_inc = include_directories('src')
 
 executable('pixelpong',
   'src/main.cpp',
+  'src/stb_impl.cpp',
   include_directories: pixelpong_inc,
   dependencies: [nlohmann_json_dep, uwebsockets_dep, stb_dep],
   install: true,
