@@ -3,6 +3,7 @@
 namespace stigsb\pixelpong\frame;
 
 use stigsb\pixelpong\bitmap\Bitmap;
+use stigsb\pixelpong\server\Color;
 
 class OffscreenFrameBuffer implements FrameBuffer
 {
@@ -61,7 +62,7 @@ class OffscreenFrameBuffer implements FrameBuffer
      */
     public function getPixel($x, $y)
     {
-        if ($x < 0 || $x >= $this->width || $y < 0 || $y >= $this->width) {
+        if ($x < 0 || $x >= $this->width || $y < 0 || $y >= $this->height) {
             throw new \InvalidArgumentException('$x or $y out of bounds');
         }
         return $this->currentFrame[($y * $this->width) + $x];
@@ -146,9 +147,11 @@ class OffscreenFrameBuffer implements FrameBuffer
                 if ($xx >= $this->width || $xx < 0) continue;
                 for ($y = 0; $y < $h; ++$y) {
                     $yy = $yoff + $y;
-                    if ($y >= $this->height || $yy < 0) continue;
+                    if ($yy >= $this->height || $yy < 0) continue;
                     $pixel = $pixels[($y * $w) + $x];
-                    $this->setPixel($xx, $y + $yoff, $pixel);
+                    if ($pixel !== Color::TRANSPARENT) {
+                        $this->setPixel($xx, $y + $yoff, $pixel);
+                    }
                 }
             }
         }

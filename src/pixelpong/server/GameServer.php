@@ -92,6 +92,10 @@ class GameServer implements MessageComponentInterface
     public function onMessage(ConnectionInterface $from, $rawmsg)
     {
         $msg = json_decode($rawmsg);
+        if ($msg === null) {
+            printf("Invalid JSON from client: %s\n", $rawmsg);
+            return;
+        }
         if (isset($msg->V) && isset($msg->D) && isset($msg->T)) {
             $msg = (object)['event' => (object)['device' => $msg->D, 'eventType' => $msg->T, 'value' => $msg->V]];
             $rawmsg .= json_encode($msg);
@@ -123,22 +127,15 @@ class GameServer implements MessageComponentInterface
 //        printf("== frameupdate: %s.%03d\n", strftime('%H:%M:%S', $time), $ms);
         $this->gameLoop->onFrameUpdate();
         $frame = $this->frameBuffer->getAndSwitchFrame();
-        $encodedFrameCache = [];
         foreach ($this->connections as $conn) {
             /** @var PlayerConnection $playerConnection */
             $playerConnection = $this->connections[$conn];
             if (!$playerConnection->isOutputEnabled()) {
                 continue;
             }
-            $encoder = $playerConnection->getFrameEncoder();
-            $key = get_class($encoder);
-            if (!isset($encodedFrameCache[$key])) {
-                $encodedFrameCache[$key] = $playerConnection->getFrameEncoder()->encodeFrame($frame);
-            }
-//            printf("message: %s\n", $encodedFrameCache[$key]);
-            if ($encodedFrameCache[$key]) {
-                // the encoded frame may be null if there are no changes
-                $conn->send($encodedFrameCache[$key]);
+            $encoded = $playerConnection->getFrameEncoder()->encodeFrame($frame);
+            if ($encoded) {
+                $conn->send($encoded);
             }
         }
     }

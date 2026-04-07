@@ -53,6 +53,12 @@ class MainGameLoop extends BaseGameLoop
 
     const BALL_SPEEDUP_FACTOR = 1.10;
 
+    /** Influence factor for paddle movement on ball angle (fraction of X speed added to Y) */
+    const PADDLE_INFLUENCE = 0.5;
+
+    /** Maximum Y/X ratio to prevent near-vertical trajectories */
+    const PADDLE_MAX_ANGLE_RATIO = 1.5;
+
     const FRAME_EDGE_SIZE = 1.0;
 
     /** @var int */
@@ -394,6 +400,22 @@ class MainGameLoop extends BaseGameLoop
         $bounceBack = $this->ballPaddleLimitX[$paddle] - $this->ballPos[self::X];
         $this->ballPos[self::X] = $this->ballPaddleLimitX[$paddle] + $bounceBack;
         $this->ballDelta[self::X] *= -1.0;
+
+        // Paddle movement influences ball angle, like classic Pong
+        $paddleDirection = $this->currentYAxis[$paddle]; // -1, 0, or 1
+        if ($paddleDirection != Event::AXIS_NEUTRAL) {
+            $influence = abs($this->ballDelta[self::X]) * self::PADDLE_INFLUENCE;
+            $this->ballDelta[self::Y] += $influence * $paddleDirection;
+
+            // Cap Y speed to prevent near-vertical trajectories
+            $maxY = abs($this->ballDelta[self::X]) * self::PADDLE_MAX_ANGLE_RATIO;
+            $sign = $this->ballDelta[self::Y] >= 0 ? 1.0 : -1.0;
+            $absY = abs($this->ballDelta[self::Y]);
+            if ($absY > $maxY) {
+                $this->ballDelta[self::Y] = $sign * $maxY;
+            }
+        }
+
         $this->maybeSpeedUpBall();
     }
 
