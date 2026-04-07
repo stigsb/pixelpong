@@ -34,7 +34,11 @@ fn color_map() -> HashMap<u8, i8> {
 }
 
 pub fn inverse_color_map() -> HashMap<i8, u8> {
-    color_map().into_iter().map(|(k, v)| (v, k)).collect()
+    let mut m: HashMap<i8, u8> = color_map().into_iter().map(|(k, v)| (v, k)).collect();
+    // Prefer canonical chars for BLACK and WHITE
+    m.insert(color::BLACK, b'.');
+    m.insert(color::WHITE, b'#');
+    m
 }
 
 impl BitmapLoader {
