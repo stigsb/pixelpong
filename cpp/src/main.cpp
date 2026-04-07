@@ -10,6 +10,10 @@
 #include "frame/frame_encoder.hpp"
 #include "game/event.hpp"
 #include "game/game_loop.hpp"
+#include "game/main_game.hpp"
+#include "game/test_image.hpp"
+#include "game/joystick_test.hpp"
+#include "game/maker_faire.hpp"
 
 int main(int argc, char* argv[]) {
     std::printf("pixelpong starting\n");
