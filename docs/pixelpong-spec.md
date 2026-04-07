@@ -183,7 +183,7 @@ A viewport window into a larger bitmap:
 
 ## Network Protocol
 
-WebSocket connections on a configurable port (default: 4432).
+WebSocket connections on a configurable port. The default port varies by implementation language (e.g., PHP: 4432, TS: 4452).
 
 ### Server → Client
 
@@ -481,7 +481,7 @@ These bugs exist in the original PHP implementation and should be fixed in new p
 | Ball Y reset position | Hardcoded 12.0 | `displayHeight / 2.0 - ballHeight / 2.0` |
 | Sprite transparency check | `pixel > 0` (skips BLACK) | `pixel !== TRANSPARENT` (correct) |
 | Y velocity min clamp | `0.35 * \|ballDelta[X]\|` | Not applied |
-| Default WebSocket port | 4432 | 4452 |
+| Default WebSocket port | 4432 | 4452 (varies by language, intentional) |
 | Time source | `microtime(true)` | `performance.now() / 1000` |
 | Frame encoder caching | Shared cache per encoder class | Per-client encoding |
 | Game loop transitions | Via DI container | Via server.switchToGameLoop() |
