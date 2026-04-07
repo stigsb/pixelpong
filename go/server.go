@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"nhooyr.io/websocket"
@@ -14,14 +15,15 @@ import (
 type PlayerConnection struct {
 	conn    *websocket.Conn
 	encoder *JsonFrameEncoder
-	input   bool
-	output  bool
+	input   atomic.Bool
+	output  atomic.Bool
 }
 
 type Server struct {
 	mu          sync.RWMutex
 	connections map[*websocket.Conn]*PlayerConnection
 	events      chan InputEvent
+	commands    chan string // restart commands routed to ticker goroutine
 	gameLoop    GameLoop
 	fb          *FrameBuffer
 	config      Config
@@ -47,6 +49,7 @@ func NewServer(cfg Config, fb *FrameBuffer, loader *BitmapLoader, font *Font) *S
 	s := &Server{
 		connections: make(map[*websocket.Conn]*PlayerConnection),
 		events:      make(chan InputEvent, 64),
+		commands:    make(chan string, 4),
 		fb:          fb,
 		config:      cfg,
 		loader:      loader,
@@ -130,10 +133,10 @@ func (s *Server) handleMessage(conn *websocket.Conn, data []byte) {
 	}
 
 	if msg.Input != nil {
-		pc.input = *msg.Input
+		pc.input.Store(*msg.Input)
 	}
 	if msg.Output != nil {
-		pc.output = *msg.Output
+		pc.output.Store(*msg.Output)
 	}
 	if msg.Event != nil {
 		s.events <- InputEvent{
@@ -144,10 +147,8 @@ func (s *Server) handleMessage(conn *websocket.Conn, data []byte) {
 	}
 	if msg.Command == "restart" {
 		log.Println("Restart requested by client")
-		s.switchToGameLoop("testimage")
+		s.commands <- "restart"
 	}
-
-	log.Printf("incoming message: %s", string(data))
 }
 
 func (s *Server) Run() {
@@ -155,9 +156,13 @@ func (s *Server) Run() {
 	defer ticker.Stop()
 
 	for range ticker.C {
-		// Process all pending events
+		// Process all pending commands and events
 		for {
 			select {
+			case cmd := <-s.commands:
+				if cmd == "restart" {
+					s.switchToGameLoop("testimage")
+				}
 			case event := <-s.events:
 				s.gameLoop.OnEvent(event)
 			default:
@@ -181,7 +186,7 @@ func (s *Server) Run() {
 
 		s.mu.RLock()
 		for _, pc := range s.connections {
-			if !pc.output {
+			if !pc.output.Load() {
 				continue
 			}
 			encoded := pc.encoder.EncodeFrame(frame)
