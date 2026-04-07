@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>pixelpong</title>
+</head>
+<body bgcolor="#000000" color="#ffffff">
+<script language="javascript" type="text/javascript">
+  var wsUri = (location.hostname == '') ? 'ws://localhost:4432/' : 'wss://' + location.hostname + '/ppws/';
+  var websocket;
+  var output;
+  var numPixelsX = 0;
+  var numPixelsY = 0;
+  var canvas;
+  var ctx, pctx;
+  var frameCounter = 0;
+  var palette;
+  var currentColor;
+  var retryInterval;
+  var pixelSizeX = 20;
+  var pixelSizeY = 18;
+
+  var keyDownEventMap = {
+    '32' /* space */: {'device': 1, 'eventType': 3, 'value':  1},
+    '65' /* a */: {'device': 1, 'eventType': 2, 'value': -1},
+    '90' /* z */: {'device': 1, 'eventType': 2, 'value':  1},
+    '75' /* k */: {'device': 2, 'eventType': 2, 'value': -1},
+    '77' /* m */: {'device': 2, 'eventType': 2, 'value':  1}
+  };
+  var keyUpEventMap = {
+    '32' /* space */: {'device': 1, 'eventType': 3, 'value':  0},
+    '65' /* a */: {'device': 1, 'eventType': 2, 'value': 0},
+    '90' /* z */: {'device': 1, 'eventType': 2, 'value': 0},
+    '75' /* k */: {'device': 2, 'eventType': 2, 'value': 0},
+    '77' /* m */: {'device': 2, 'eventType': 2, 'value': 0}
+  };
+  // device-axis
+  var activeAxes = {
+    '1-2': false,
+    '2-2': false
+  };
+
+  function init() {
+    output = document.getElementById("output");
+    canvas = document.getElementById("canvas");
+    ctx = canvas.getContext("2d");
+    switchToColor('#000000');
+    var pcanvas = document.getElementById('palette');
+    if (pcanvas) {
+      pctx = pcanvas.getContext('2d');
+    }
+    window.addEventListener('keydown', function(ev) {
+      var code = '' + ev.keyCode;
+      if (keyDownEventMap[code]) {
+        var eventData = keyDownEventMap[code];
+        var devaxis = eventData.device + '-' + eventData.eventType;
+        if (!activeAxes[devaxis]) {
+          doSend(JSON.stringify({'event': eventData}));
+          activeAxes[devaxis] = true;
+        }
+      }
+    });
+    window.addEventListener('keyup', function(ev) {
+      var code = '' + ev.keyCode;
+      if (keyUpEventMap[code]) {
+        var eventData = keyUpEventMap[code];
+        var devaxis = eventData.device + '-' + eventData.eventType;
+        doSend(JSON.stringify({'event': eventData}));
+        activeAxes[devaxis] = false;
+      } else {
+        if (ev.keyCode == 27) {
+          doRestartServer();
+        } else if (ev.keyCode == 49) {
+          doConnect();
+        }
+      }
+    });
+    doConnect();
+  }
+
+  function doConnect() {
+    websocket = new WebSocket(wsUri);
+    websocket.onopen = function(evt) { onOpen(evt) };
+    websocket.onclose = function(evt) { onClose(evt) };
+    websocket.onmessage = function(evt) { onMessage(evt) };
+    websocket.onerror = function(evt) { onError(evt) };
+    canvas.focus();
+  }
+
+  function onOpen(evt) {
+    writeToScreen("CONNECTED: " + evt);
+    doSend('{"input":true,"output":true}');
+  }
+
+  function onClose(evt) {
+    writeToScreen("DISCONNECTED: " + evt.code);
+  }
+
+  function onMessage(evt) {
+    var message = JSON.parse(evt.data);
+    if (message.frameInfo) {
+      numPixelsX = message.frameInfo.width;
+      numPixelsY = message.frameInfo.height;
+      resizeCanvas(numPixelsX, numPixelsY);
+      palette = message.frameInfo.palette;
+//      console.log('Palette: ' + palette)
+      if (pctx) {
+        for (var i = 0; i < palette.length; ++i) {
+          pctx.fillStyle = palette[i];
+          pctx.fillRect(0, i * 15, 40, 15);
+        }
+      }
+    }
+    var pixelsDrawn = 0;
+    if (message.frame) {
+      pixelsDrawn += drawFullFrame(message.frame);
+    }
+    if (message.frameDelta) {
+//      console.log(message.frameDelta);
+      pixelsDrawn += drawFrameDelta(message.frameDelta);
+    }
+  }
+
+  function drawFullFrame(pixels) {
+    var pixelsDrawn = 0;
+    switchToColor('#000000');
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for (var ix in pixels) {
+      x = ix % numPixelsX;
+      y = Math.floor(ix / numPixelsX);
+      switchToColorIndex(pixels[ix]);
+      ctx.fillRect((x * pixelSizeX), (y * pixelSizeY), pixelSizeX, pixelSizeY);
+      ++pixelsDrawn;
+    }
+    return pixelsDrawn;
+  }
+
+  function drawFrameDelta(pixels) {
+    var pixelsDrawn = 0;
+    for (var ix_str in pixels) {
+      ix = parseInt(ix_str);
+      x = ix % numPixelsX;
+      y = Math.floor(ix / numPixelsX);
+      switchToColorIndex(pixels[ix_str]);
+      ctx.fillRect((x * pixelSizeX), (y * pixelSizeY), pixelSizeX, pixelSizeY);
+      ++pixelsDrawn;
+    }
+    return pixelsDrawn;
+  }
+
+  function onError(evt) {
+    replaceOutput('<span style="color: red;">ERROR:</span> ' + JSON.stringify(evt));
+    setTimeout(doConnect, 1000);
+  }
+
+  function doSend(message) {
+    websocket.send(message);
+    replaceOutput("SENT: " + message);
+  }
+
+  function switchToColor(color) {
+    if (color != currentColor) {
+      ctx.fillStyle = currentColor = color;
+    }
+  }
+
+  function switchToColorIndex(color) {
+    switchToColor(palette[color]);
+  }
+
+  function replaceOutput(message) {
+    output.innerHTML = message;
+  }
+
+  function writeToScreen(message) {
+    var pre = document.createElement("p");
+    pre.style.wordWrap = "break-word";
+    pre.innerHTML = message;
+    output.appendChild(pre);
+  }
+
+  function resizeCanvas(x, y) {
+    canvas.width = x * pixelSizeX;
+    canvas.height = y * pixelSizeY;
+    writeToScreen('Resized canvas to ' + canvas.width + ' x ' + canvas.height + ' px');
+  }
+
+  function doRestartServer() {
+    canvas.focus();
+    doSend('{"command":"restart"}');
+    websocket.close();
+    setTimeout(doConnect, 1100);
+  }
+
+  window.addEventListener("load", init, false);
+</script>
+
+<canvas width="470" height="270" id="canvas"></canvas>
+<br />
+<div style="font-family: monospace"><pre id="output"></pre></div>
+</body>
+</html>

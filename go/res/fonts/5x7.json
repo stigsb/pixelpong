@@ -1,0 +1,11 @@
+{
+  "width": 5,
+  "height": 7,
+  "blankChar": " ",
+  "pixelColor": "#333333",
+  "charSpacing": [1, 2],
+  "characterLines": [
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,    \"'?!@_*#$%&",
+    "()+-/:;<=>[]^`{|}~\\"
+  ]
+}
