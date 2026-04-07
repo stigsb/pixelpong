@@ -1,3 +1,10 @@
 /.idea
 /vendor
 composer.phar
+/cpp/builddir/
+/cpp/subprojects/uSockets-*/
+/cpp/subprojects/uWebSockets-*/
+/cpp/subprojects/nlohmann_json-*/
+/cpp/subprojects/zlib-*/
+/cpp/subprojects/stb/
+/cpp/subprojects/packagecache/

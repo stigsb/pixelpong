@@ -1,0 +1,9 @@
+[wrap-file]
+directory = uWebSockets-20.71.0
+source_url = https://github.com/uNetworking/uWebSockets/archive/refs/tags/v20.71.0.tar.gz
+source_filename = uWebSockets-20.71.0.tar.gz
+source_hash = 1e4e7bfa379dd8096182d0b47ae648c7bcf93be4a4130ad6e7625ed1d46aec1d
+patch_directory = uwebsockets
+
+[provide]
+uwebsockets = uwebsockets_dep

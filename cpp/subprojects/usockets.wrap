@@ -1,0 +1,9 @@
+[wrap-file]
+directory = uSockets-0.8.8
+source_url = https://github.com/uNetworking/uSockets/archive/refs/tags/v0.8.8.tar.gz
+source_filename = uSockets-0.8.8.tar.gz
+source_hash = d14d2efe1df767dbebfb8d6f5b52aa952faf66b30c822fbe464debaa0c5c0b17
+patch_directory = usockets
+
+[provide]
+usockets = usockets_dep
