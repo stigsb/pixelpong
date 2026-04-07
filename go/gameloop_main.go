@@ -63,6 +63,7 @@ type MainGameLoop struct {
 
 	gameState    int
 	winningSide  int
+	winnerSprite *Sprite
 
 	initTimestamp    float64
 	startTimestamp   float64
@@ -115,6 +116,10 @@ func (m *MainGameLoop) initializeGame(fb *FrameBuffer, loader *BitmapLoader) {
 }
 
 func (m *MainGameLoop) resetGame() {
+	if m.winnerSprite != nil {
+		m.winnerSprite.Visible = false
+		m.winnerSprite = nil
+	}
 	m.lastYAxisUpdate = [2]float64{}
 	m.currentYAxis = [2]int{AxisNeutral, AxisNeutral}
 	m.winningSide = -1
@@ -248,6 +253,24 @@ func (m *MainGameLoop) updatePaddleForDevice(device int) {
 func (m *MainGameLoop) playerWon(side int) {
 	m.gameState = stateGameOver
 	m.winningSide = side
+
+	// Remove previous winner sprite if any
+	if m.winnerSprite != nil {
+		m.winnerSprite.Visible = false
+	}
+
+	// Render winner text
+	var text string
+	if side == sideLeft {
+		text = "P1 WINS!"
+	} else {
+		text = "P2 WINS!"
+	}
+	textBm := NewTextBitmap(m.fontLoader, text, ColorWhite, 1)
+	textX := (m.displayWidth - textBm.Width()) / 2
+	textY := (m.displayHeight - textBm.Height()) / 2
+	m.winnerSprite = NewSprite(textBm, textX, textY)
+	m.AddSprite(m.winnerSprite)
 }
 
 func (m *MainGameLoop) ballHitPaddle(paddle int) bool {
