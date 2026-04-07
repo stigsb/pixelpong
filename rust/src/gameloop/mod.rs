@@ -10,10 +10,10 @@ use crate::frame::FrameBuffer;
 use crate::server::event::Event;
 
 pub enum GameLoopTransition {
-    SwitchTo(Box<dyn GameLoop>),
+    SwitchTo(Box<dyn GameLoop + Send>),
 }
 
-pub trait GameLoop {
+pub trait GameLoop: Send {
     fn on_enter(&mut self, fb: &mut dyn FrameBuffer, loader: &mut BitmapLoader);
     fn on_frame_update(&mut self, fb: &mut dyn FrameBuffer);
     fn on_event(&mut self, event: &Event) -> Option<GameLoopTransition>;
