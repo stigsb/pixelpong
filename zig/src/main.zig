@@ -1,7 +1,10 @@
 const std = @import("std");
 const FrameBuffer = @import("frame_buffer.zig").FrameBuffer;
 const BitmapLoader = @import("bitmap_loader.zig").BitmapLoader;
-const MainGameState = @import("game_loop.zig").MainGameState;
+const game_loop_mod = @import("game_loop.zig");
+const MainGameState = game_loop_mod.MainGameState;
+const PressStartState = game_loop_mod.PressStartState;
+const GameLoop = game_loop_mod.GameLoop;
 const GameServer = @import("game_server.zig").GameServer;
 
 pub fn main() !void {
@@ -87,13 +90,18 @@ pub fn main() !void {
     var loader = BitmapLoader.init(allocator, &search_paths);
     defer loader.deinit();
 
+    const htdocs_path = std.fmt.allocPrint(allocator, "{s}/htdocs", .{res_base}) catch unreachable;
+    defer allocator.free(htdocs_path);
+
     var game_state = try MainGameState.init(&loader, &fb);
+    var press_start = try PressStartState.init(&loader, &fb, &game_state);
+    var active_loop = GameLoop{ .press_start = &press_start };
 
     // Enter game
-    game_state.onEnter(&fb);
+    active_loop.onEnter(&fb);
 
     // Start server
-    var server = try GameServer.init(allocator, &fb, &game_state, bind_addr, port, fps);
+    var server = try GameServer.init(allocator, &fb, active_loop, bind_addr, port, fps, htdocs_path);
     defer server.deinit();
 
     try server.run();

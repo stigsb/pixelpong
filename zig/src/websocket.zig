@@ -6,11 +6,9 @@ pub const Handshake = struct {
     /// Parse an HTTP upgrade request and produce the 101 response.
     pub fn respond(request: []const u8, buf: []u8) ![]u8 {
         const key = extractSecWebSocketKey(request) orelse return error.InvalidHandshake;
-        const magic = "258EAFA5-E914-47DA-95CA-5DF5-AB11653E4013";
-        _ = magic;
 
         // Compute Sec-WebSocket-Accept = base64(sha1(key ++ GUID))
-        const guid = "258EAFA5-E914-47DA-95CA-5DF5AB11653E4013";
+        const guid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
         var hasher = std.crypto.hash.Sha1.init(.{});
         hasher.update(key);
         hasher.update(guid);

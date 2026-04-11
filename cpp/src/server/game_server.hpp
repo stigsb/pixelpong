@@ -2,6 +2,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <fstream>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -14,6 +15,7 @@
 #include "game/event.hpp"
 #include "game/game_loop.hpp"
 #include "game/main_game.hpp"
+#include "game/press_start.hpp"
 #include "game/test_image.hpp"
 #include "server/player_connection.hpp"
 
@@ -30,8 +32,8 @@ struct PerSocketData {
 class GameServer {
 public:
     GameServer(int port, const std::string& bind_addr, double fps,
-               GameContext& ctx)
-        : port_(port), bind_addr_(bind_addr), fps_(fps), ctx_(ctx) {}
+               GameContext& ctx, const std::string& res_dir)
+        : port_(port), bind_addr_(bind_addr), fps_(fps), ctx_(ctx), res_dir_(res_dir) {}
 
     void run() {
         auto switch_fn = [this](std::unique_ptr<GameLoop> loop) {
@@ -39,10 +41,22 @@ public:
             game_loop_->on_enter();
         };
 
-        game_loop_ = std::make_unique<TestImage>(ctx_, switch_fn);
+        game_loop_ = std::make_unique<PressStart>(ctx_, switch_fn);
         game_loop_->on_enter();
 
-        uWS::App().ws<PerSocketData>("/*", {
+        uWS::App().get("/*", [this](auto* res, auto* req) {
+            std::string path = res_dir_ + "/htdocs/index.html";
+            std::ifstream file(path);
+            if (file) {
+                std::string content((std::istreambuf_iterator<char>(file)),
+                                   std::istreambuf_iterator<char>());
+                res->writeHeader("Content-Type", "text/html; charset=utf-8");
+                res->end(content);
+            } else {
+                res->writeStatus("404 Not Found");
+                res->end("Not Found");
+            }
+        }).ws<PerSocketData>("/*", {
             .open = [this](auto* ws) {
                 int id = next_id_++;
                 ws->getUserData()->id = id;
@@ -155,6 +169,7 @@ private:
     std::string bind_addr_;
     double fps_;
     GameContext& ctx_;
+    std::string res_dir_;
     std::unique_ptr<GameLoop> game_loop_;
     std::unordered_map<int, Connection> connections_;
     int next_id_ = 0;

@@ -1,0 +1,27 @@
+{
+  "name": "pixelpong",
+  "version": "1.0.0",
+  "description": "A retro pong game with a C64-inspired 16-color palette, served over WebSocket. Originally built for HackRockheim.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "npx playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stigsb/pixelpong.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/stigsb/pixelpong/issues"
+  },
+  "homepage": "https://github.com/stigsb/pixelpong#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}

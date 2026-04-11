@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
     pixelpong::GameContext ctx{frame_buffer, bitmap_loader, font_loader};
 
     std::printf("Pixelpong C++ server starting...\n");
-    pixelpong::GameServer server(port, bind_addr, fps, ctx);
+    pixelpong::GameServer server(port, bind_addr, fps, ctx, res_dir);
     server.run();
 
     return 0;

@@ -8,6 +8,8 @@ const FrameBuffer = @import("frame_buffer.zig").FrameBuffer;
 const JsonFrameEncoder = @import("frame_encoder.zig").JsonFrameEncoder;
 const game_loop_mod = @import("game_loop.zig");
 const MainGameState = game_loop_mod.MainGameState;
+const PressStartState = game_loop_mod.PressStartState;
+const GameLoop = game_loop_mod.GameLoop;
 const Event = @import("event.zig").Event;
 const ws = @import("websocket.zig");
 
@@ -24,18 +26,20 @@ const Connection = struct {
 pub const GameServer = struct {
     allocator: Allocator,
     frame_buffer: *FrameBuffer,
-    game_state: *MainGameState,
+    game_loop: GameLoop,
     connections: std.ArrayList(*Connection),
     listener: net.Server,
     fps: f64,
+    htdocs_path: []const u8,
 
     pub fn init(
         allocator: Allocator,
         frame_buffer: *FrameBuffer,
-        game_state: *MainGameState,
+        game_loop: GameLoop,
         bind_addr: []const u8,
         port: u16,
         fps: f64,
+        htdocs_path: []const u8,
     ) !GameServer {
         const address = try net.Address.parseIp(bind_addr, port);
         const listener = try address.listen(.{
@@ -50,10 +54,11 @@ pub const GameServer = struct {
         return .{
             .allocator = allocator,
             .frame_buffer = frame_buffer,
-            .game_state = game_state,
+            .game_loop = game_loop,
             .connections = .empty,
             .listener = listener,
             .fps = fps,
+            .htdocs_path = htdocs_path,
         };
     }
 
@@ -76,7 +81,7 @@ pub const GameServer = struct {
             self.acceptNewConnections();
             self.readAllConnections();
 
-            try self.game_state.onFrameUpdate(self.frame_buffer);
+            try self.game_loop.onFrameUpdate(self.frame_buffer);
 
             const frame = self.frame_buffer.getAndSwitchFrame();
             try self.broadcastFrame(frame);
@@ -150,15 +155,27 @@ pub const GameServer = struct {
 
         if (!conn.handshake_done) {
             if (std.mem.indexOf(u8, conn.recv_buf[0..conn.recv_len], "\r\n\r\n")) |_| {
-                var resp_buf: [512]u8 = undefined;
-                const resp = ws.Handshake.respond(conn.recv_buf[0..conn.recv_len], &resp_buf) catch return false;
-                _ = conn.stream.write(resp) catch return false;
-                conn.handshake_done = true;
-                conn.recv_len = 0;
+                const request = conn.recv_buf[0..conn.recv_len];
 
-                const info = conn.encoder.encodeFrameInfo() catch return true;
-                defer self.allocator.free(info);
-                self.sendWebSocketText(conn, info);
+                // Check if this is a WebSocket upgrade request
+                if (std.mem.indexOf(u8, request, "Upgrade: websocket") != null or
+                    std.mem.indexOf(u8, request, "Upgrade: Websocket") != null or
+                    std.mem.indexOf(u8, request, "Upgrade: WebSocket") != null)
+                {
+                    var resp_buf: [512]u8 = undefined;
+                    const resp = ws.Handshake.respond(request, &resp_buf) catch return false;
+                    _ = conn.stream.write(resp) catch return false;
+                    conn.handshake_done = true;
+                    conn.recv_len = 0;
+
+                    const info = conn.encoder.encodeFrameInfo() catch return true;
+                    defer self.allocator.free(info);
+                    self.sendWebSocketText(conn, info);
+                } else {
+                    // Serve static HTML file for regular HTTP requests
+                    self.serveHttpFile(conn);
+                    return false; // Close connection after serving
+                }
             }
             return true;
         }
@@ -176,6 +193,27 @@ pub const GameServer = struct {
         }
 
         return true;
+    }
+
+    fn serveHttpFile(self: *GameServer, conn: *Connection) void {
+        const index_path = std.fmt.allocPrint(self.allocator, "{s}/index.html", .{self.htdocs_path}) catch return;
+        defer self.allocator.free(index_path);
+
+        const file = std.fs.cwd().openFile(index_path, .{}) catch {
+            const not_found = "HTTP/1.1 404 Not Found\r\nContent-Length: 9\r\n\r\nNot Found";
+            _ = conn.stream.write(not_found) catch {};
+            return;
+        };
+        defer file.close();
+
+        const stat = file.stat() catch return;
+        const body = file.readToEndAlloc(self.allocator, 1024 * 1024) catch return;
+        defer self.allocator.free(body);
+
+        var header_buf: [256]u8 = undefined;
+        const header = std.fmt.bufPrint(&header_buf, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {d}\r\nConnection: close\r\n\r\n", .{stat.size}) catch return;
+        _ = conn.stream.write(header) catch return;
+        _ = conn.stream.write(body) catch return;
     }
 
     fn handleMessage(self: *GameServer, payload: []const u8) void {
@@ -207,7 +245,7 @@ pub const GameServer = struct {
                         .event_type = @enumFromInt(event_type_int),
                         .value = value_int,
                     };
-                    self.game_state.onEvent(ev);
+                    self.game_loop.onEvent(ev);
                     return;
                 }
             }
@@ -234,7 +272,7 @@ pub const GameServer = struct {
                     .event_type = @enumFromInt(event_type_int),
                     .value = value_int,
                 };
-                self.game_state.onEvent(ev);
+                self.game_loop.onEvent(ev);
             }
         }
     }

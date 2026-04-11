@@ -1,3 +1,6 @@
+import { createServer, type Server } from "node:http";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { WebSocketServer, WebSocket } from "ws";
 import type { FrameBuffer } from "../frame/frame-buffer.js";
 import { JsonFrameEncoder } from "../frame/json-frame-encoder.js";
@@ -11,6 +14,7 @@ export class GameServer {
   private gameLoop!: GameLoop;
   private readonly connections = new Map<WebSocket, PlayerConnection>();
   private readonly wss: WebSocketServer;
+  private readonly httpServer: Server;
   private updateTimer: ReturnType<typeof setInterval>;
 
   constructor(
@@ -19,10 +23,30 @@ export class GameServer {
     port: number,
     fps: number,
     initialGameLoop: GameLoop,
+    htdocsPath: string,
   ) {
-    this.wss = new WebSocketServer({ port });
+    const indexPath = resolve(htdocsPath, "index.html");
 
+    this.httpServer = createServer((req, res) => {
+      if (req.method === "GET" && (req.url === "/" || req.url === "/index.html")) {
+        try {
+          const html = readFileSync(indexPath, "utf-8");
+          res.writeHead(200, { "Content-Type": "text/html" });
+          res.end(html);
+        } catch {
+          res.writeHead(500);
+          res.end("Internal Server Error");
+        }
+      } else {
+        res.writeHead(404);
+        res.end("Not Found");
+      }
+    });
+
+    this.wss = new WebSocketServer({ server: this.httpServer });
     this.wss.on("connection", (ws) => this.onOpen(ws));
+
+    this.httpServer.listen(port);
 
     this.updateTimer = setInterval(() => this.onFrameUpdate(), 1000 / fps);
 
@@ -114,5 +138,6 @@ export class GameServer {
   close(): void {
     clearInterval(this.updateTimer);
     this.wss.close();
+    this.httpServer.close();
   }
 }

@@ -33,5 +33,5 @@ container.set("frameBuffer", frameBuffer);
 container.set("bitmapLoader", bitmapLoader);
 
 const testImageScreen = new TestImageScreen(frameBuffer, container);
-const gameServer = new GameServer(frameBuffer, container, argPort, argFps, testImageScreen);
+const gameServer = new GameServer(frameBuffer, container, argPort, argFps, testImageScreen, `${topDir}/res/htdocs`);
 container.set("gameServer", gameServer);

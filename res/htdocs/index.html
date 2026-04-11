@@ -6,7 +6,7 @@
 </head>
 <body bgcolor="#000000" color="#ffffff">
 <script language="javascript" type="text/javascript">
-  var wsUri = (location.hostname == '') ? 'ws://localhost:4432/' : 'wss://' + location.hostname + '/ppws/';
+  var wsUri = 'ws://' + (location.host || 'localhost:4432') + '/';
   var websocket;
   var output;
   var numPixelsX = 0;

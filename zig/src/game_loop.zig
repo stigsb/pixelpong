@@ -9,7 +9,7 @@ const Color = @import("color.zig").Color;
 /// Polymorphic game loop interface using tagged union.
 pub const GameLoop = union(enum) {
     main_game: *MainGameState,
-    // Future: press_start, test_image, etc.
+    press_start: *PressStartState,
 
     pub fn onEnter(self: GameLoop, fb: *FrameBuffer) void {
         switch (self) {
@@ -27,6 +27,68 @@ pub const GameLoop = union(enum) {
         switch (self) {
             inline else => |state| state.onEvent(ev),
         }
+    }
+};
+
+pub const PressStartState = struct {
+    press_start_frame: ?[]const Color,
+    to_play_frame: ?[]const Color,
+    enter_time: f64,
+    previous_elapsed: u64,
+    main_game_state: *MainGameState,
+
+    pub fn init(loader: *BitmapLoader, fb: *FrameBuffer, main_game_state: *MainGameState) !PressStartState {
+        const press_start_bmp = try loader.loadBitmap("press_start");
+        const to_play_bmp = try loader.loadBitmap("to_play");
+        _ = fb;
+        return PressStartState{
+            .press_start_frame = press_start_bmp.pixels,
+            .to_play_frame = to_play_bmp.pixels,
+            .enter_time = 0,
+            .previous_elapsed = 0,
+            .main_game_state = main_game_state,
+        };
+    }
+
+    pub fn onEnter(self: *PressStartState, fb: *FrameBuffer) void {
+        if (self.press_start_frame) |frame| {
+            fb.setBackgroundFrame(frame);
+        }
+        self.enter_time = currentTime();
+        self.previous_elapsed = 0;
+    }
+
+    pub fn onFrameUpdate(self: *PressStartState, fb: *FrameBuffer) !void {
+        const elapsed: u64 = @intFromFloat(currentTime() - self.enter_time);
+        if (elapsed > self.previous_elapsed) {
+            switch (elapsed % 4) {
+                0 => {
+                    if (self.press_start_frame) |frame| {
+                        fb.setBackgroundFrame(frame);
+                    }
+                },
+                2 => {
+                    if (self.to_play_frame) |frame| {
+                        fb.setBackgroundFrame(frame);
+                    }
+                },
+                else => {},
+            }
+        }
+        self.previous_elapsed = elapsed;
+    }
+
+    pub fn onEvent(self: *PressStartState, ev: Event) void {
+        const EvType = @import("event.zig").EventType;
+        if (ev.event_type == EvType.joy_button_1 and ev.value == 0) {
+            _ = self;
+            std.debug.print("Button pressed - would switch to main game\n", .{});
+        }
+    }
+
+    fn currentTime() f64 {
+        const ns = std.time.nanoTimestamp();
+        return @as(f64, @floatFromInt(ns)) / 1_000_000_000.0;
     }
 };
 
