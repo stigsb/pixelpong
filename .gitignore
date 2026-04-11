@@ -8,3 +8,5 @@ composer.phar
 /cpp/subprojects/zlib-*/
 /cpp/subprojects/stb/
 /cpp/subprojects/packagecache/
+.zig-cache
+zig/zig-out

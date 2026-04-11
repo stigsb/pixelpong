@@ -1367,6 +1367,8 @@ const (
 	ballSpeedupEveryNSecs = 10
 	ballSpeedupFactor     = 1.10
 	frameEdgeSize         = 1.0
+	paddleInfluence       = 0.5 // moving paddle adds/removes half X speed to Y speed
+	paddleMaxAngleRatio   = 1.5 // max Y/X ratio to prevent near-vertical trajectories
 )
 
 const (
@@ -1614,6 +1616,25 @@ func (m *MainGameLoop) bounceBallOnPaddle(paddle int) {
 	bounceBack := m.ballPaddleLimit[paddle] - m.ballPos[axisX]
 	m.ballPos[axisX] = m.ballPaddleLimit[paddle] + bounceBack
 	m.ballDelta[axisX] *= -1.0
+
+	// Paddle movement influences ball angle (like classic Pong)
+	paddleDirection := m.currentYAxis[paddle] // -1, 0, or 1
+	if paddleDirection != AxisNeutral {
+		influence := math.Abs(m.ballDelta[axisX]) * paddleInfluence
+		m.ballDelta[axisY] += influence * float64(paddleDirection)
+
+		// Cap Y speed to prevent near-vertical trajectories
+		maxY := math.Abs(m.ballDelta[axisX]) * paddleMaxAngleRatio
+		absY := math.Abs(m.ballDelta[axisY])
+		if absY > maxY {
+			sign := 1.0
+			if m.ballDelta[axisY] < 0 {
+				sign = -1.0
+			}
+			m.ballDelta[axisY] = sign * maxY
+		}
+	}
+
 	m.maybeSpeedUpBall()
 }
 
