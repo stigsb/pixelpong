@@ -2,7 +2,9 @@
 
 namespace stigsb\pixelpong\frame;
 
-class OffscreenFrameBufferTest extends \PHPUnit_Framework_TestCase
+use PHPUnit\Framework\TestCase;
+
+class OffscreenFrameBufferTest extends TestCase
 {
     const WIDTH = 7;
     const HEIGHT = 3;
@@ -10,7 +12,7 @@ class OffscreenFrameBufferTest extends \PHPUnit_Framework_TestCase
     /** @var OffscreenFrameBuffer */
     private $ofb;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->ofb = new OffscreenFrameBuffer(self::WIDTH, self::HEIGHT);
@@ -38,13 +40,15 @@ class OffscreenFrameBufferTest extends \PHPUnit_Framework_TestCase
 
     public function testGetPixelOutOfBounds()
     {
-        $this->setExpectedException(\InvalidArgumentException::class, '$x or $y out of bounds');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('$x or $y out of bounds');
         $this->ofb->getPixel(10, 10);
     }
 
     public function testSetPixelOutOfBounds()
     {
-        $this->setExpectedException(\InvalidArgumentException::class, '$x or $y out of bounds');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('$x or $y out of bounds');
         $this->ofb->setPixel(10, 10, 0);
     }
 

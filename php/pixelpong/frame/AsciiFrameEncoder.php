@@ -19,6 +19,9 @@ class AsciiFrameEncoder implements FrameEncoder
     /** @var array */
     private $colorCharMap;
 
+    /** @var string */
+    private $blankEncodedFrame;
+
     public function __construct(FrameBuffer $frameBuffer)
     {
         $this->width = $frameBuffer->getWidth();

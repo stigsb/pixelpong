@@ -2,24 +2,26 @@
 
 namespace stigsb\pixelpong\frame;
 
-class AsciiFrameEncoderTest extends \PHPUnit_Framework_TestCase
+use PHPUnit\Framework\TestCase;
+
+class AsciiFrameEncoderTest extends TestCase
 {
     const TEST_HEIGHT = 3;
     const TEST_WIDTH = 7;
-    const TEST_BLANK_ENCODED = ".......\n.......\n.......";
+    const TEST_BLANK_ENCODED = "0000000\n0000000\n0000000";
 
-    /** @var FrameBuffer|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var FrameBuffer|\PHPUnit\Framework\MockObject\MockObject */
     private $frameBuffer;
 
     /** @var AsciiFrameEncoder */
     private $encoder;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
-        $this->frameBuffer = $this->getMock(FrameBuffer::class);
-        $this->frameBuffer->expects($this->any())->method('getHeight')->willReturn(self::TEST_HEIGHT);
-        $this->frameBuffer->expects($this->any())->method('getWidth')->willReturn(self::TEST_WIDTH);
+        $this->frameBuffer = $this->createMock(FrameBuffer::class);
+        $this->frameBuffer->method('getHeight')->willReturn(self::TEST_HEIGHT);
+        $this->frameBuffer->method('getWidth')->willReturn(self::TEST_WIDTH);
         $this->encoder = new AsciiFrameEncoder($this->frameBuffer);
     }
 
@@ -31,7 +33,7 @@ class AsciiFrameEncoderTest extends \PHPUnit_Framework_TestCase
         $expected = self::TEST_BLANK_ENCODED;
         foreach ($set_pixels as $sp => $ep) {
             $frame[$sp] = 1;
-            $expected[$ep] = AsciiFrameEncoder::ENCODED_PIXEL_ON;
+            $expected[$ep] = '1';
         }
         $this->assertEquals($expected, $this->encoder->encodeFrame($frame));
     }

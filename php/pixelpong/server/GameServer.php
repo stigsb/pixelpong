@@ -2,11 +2,10 @@
 
 namespace stigsb\pixelpong\server;
 
-use Interop\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use Ratchet\ConnectionInterface;
 use Ratchet\MessageComponentInterface;
 use React\EventLoop\LoopInterface;
-use React\EventLoop\Timer\TimerInterface;
 use stigsb\pixelpong\frame\FrameBuffer;
 use stigsb\pixelpong\frame\JsonFrameEncoder;
 use stigsb\pixelpong\gameloop\GameLoop;
@@ -28,6 +27,9 @@ class GameServer implements MessageComponentInterface
 
     /** @var ContainerInterface */
     private $container;
+
+    /** @var \React\EventLoop\TimerInterface */
+    private $updateTimer;
 
     public function __construct(LoopInterface $loop, FrameBuffer $frameBuffer, ContainerInterface $container)
     {
@@ -119,7 +121,7 @@ class GameServer implements MessageComponentInterface
         }
     }
 
-    function onFrameUpdate(TimerInterface $timer)
+    function onFrameUpdate()
     {
         $utime = microtime(true);
         $time = (int)$utime;

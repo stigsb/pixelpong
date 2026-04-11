@@ -2,7 +2,7 @@
 
 namespace stigsb\pixelpong\gameloop;
 
-use Interop\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use stigsb\pixelpong\frame\FrameBuffer;
 use stigsb\pixelpong\server\Event;
 use stigsb\pixelpong\bitmap\Sprite;

@@ -12,3 +12,4 @@ composer.phar
 zig/zig-out
 node_modules
 test-results
+.phpunit.result.cache

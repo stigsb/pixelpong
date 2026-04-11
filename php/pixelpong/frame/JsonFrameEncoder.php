@@ -18,6 +18,9 @@ class JsonFrameEncoder implements FrameEncoder
     /** @var array */
     private $previousFrame;
 
+    /** @var array */
+    private $blankEncodedFrame;
+
     public function __construct(FrameBuffer $frameBuffer)
     {
         $this->width = $frameBuffer->getWidth();

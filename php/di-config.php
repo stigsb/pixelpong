@@ -17,15 +17,15 @@ return [
     'server.port'                       => DI\env('PONG_PORT', '4432'),
     'server.bind_addr'                  => DI\env('PONG_BIND_ADDR', '0.0.0.0'),
     'server.fps'                        => DI\env('PONG_FPS', '10.0'),
-    FrameBuffer::class                  => DI\object(OffscreenFrameBuffer::class)
+    FrameBuffer::class                  => DI\create(OffscreenFrameBuffer::class)
         ->constructor(
             DI\get('framebuffer.width'),
             DI\get('framebuffer.height')
         ),
-    ServerInterface::class              => DI\object(React\Socket\Server::class),
-    HttpServerInterface::class          => DI\object(Ratchet\WebSocket\WsServer::class),
-    FontLoader::class                   => DI\object(FontLoader::class)
+    ServerInterface::class              => DI\create(React\Socket\Server::class),
+    HttpServerInterface::class          => DI\create(Ratchet\WebSocket\WsServer::class),
+    FontLoader::class                   => DI\create(FontLoader::class)
         ->constructor("{$__topdir}/res/fonts"),
-    BitmapLoader::class                 => DI\object(BitmapLoader::class)
+    BitmapLoader::class                 => DI\create(BitmapLoader::class)
         ->constructor("{$__topdir}/res/bitmaps/{$__w}x{$__h}:{$__topdir}/res/sprites"),
 ];

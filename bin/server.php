@@ -5,8 +5,8 @@ exec php -d output_buffering=1 -d display_errors=1 -d memory_limit=128M $0 $@
 ob_end_clean();
 
 /** @var DI\Container $container */
-$container = require dirname(__DIR__) . '/src/bootstrap.php';
-$container->set(Interop\Container\ContainerInterface::class, $container);
+$container = require dirname(__DIR__) . '/php/bootstrap.php';
+$container->set(Psr\Container\ContainerInterface::class, $container);
 $options = getopt('f:p:h');
 if (isset($options['p'])) {
     $container->set('server.port', (int)$options['p']);
@@ -15,11 +15,10 @@ if (isset($options['f'])) {
     $container->set('server.fps', (double)$options['f']);
 }
 
-$loop = React\EventLoop\Factory::create();
+$loop = React\EventLoop\Loop::get();
 $container->set(React\EventLoop\LoopInterface::class, $loop);
 
-$socket = new React\Socket\Server($loop);
-$socket->listen((int)$container->get('server.port'), $container->get('server.bind_addr'));
+$socket = new React\Socket\SocketServer($container->get('server.bind_addr') . ':' . $container->get('server.port'), [], $loop);
 
 $frame_buffer = $container->get(\stigsb\pixelpong\frame\FrameBuffer::class);
 //$game_server = new stigsb\pixelpong\server\GameServer($loop, $frame_buffer);

@@ -4,7 +4,7 @@
 namespace stigsb\pixelpong\gameloop;
 
 
-use Interop\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use stigsb\pixelpong\frame\FrameBuffer;
 use stigsb\pixelpong\gameloop\BaseGameLoop;
 use stigsb\pixelpong\server\Event;

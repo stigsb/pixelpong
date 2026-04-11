@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<phpunit bootstrap="vendor/autoload.php">
-  <filter>
-    <whitelist addUncoveredFilesFromWhitelist="false">
-      <directory>src</directory>
-      <directory suffix=".php">test</directory>
-      <exclude>
-	    <directory suffix="Test.php">test</directory>
-      </exclude>
-    </whitelist>
-  </filter>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true">
+  <testsuites>
+    <testsuite name="default">
+      <directory>test</directory>
+    </testsuite>
+  </testsuites>
+  <source>
+    <include>
+      <directory>php</directory>
+    </include>
+  </source>
   <php>
     <ini name="memory_limit" value="1024M" />
     <ini name="error_reporting" value="E_ALL" />
