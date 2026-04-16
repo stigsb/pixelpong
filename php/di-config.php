@@ -1,7 +1,5 @@
 <?php
 
-use Ratchet\Http\HttpServerInterface;
-use React\Socket\ServerInterface;
 use stigsb\pixelpong\bitmap\BitmapLoader;
 use stigsb\pixelpong\bitmap\FontLoader;
 use stigsb\pixelpong\frame\FrameBuffer;
@@ -22,8 +20,6 @@ return [
             DI\get('framebuffer.width'),
             DI\get('framebuffer.height')
         ),
-    ServerInterface::class              => DI\create(React\Socket\Server::class),
-    HttpServerInterface::class          => DI\create(Ratchet\WebSocket\WsServer::class),
     FontLoader::class                   => DI\create(FontLoader::class)
         ->constructor("{$__topdir}/res/fonts"),
     BitmapLoader::class                 => DI\create(BitmapLoader::class)

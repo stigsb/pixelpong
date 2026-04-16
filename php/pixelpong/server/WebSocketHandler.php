@@ -49,7 +49,7 @@ class WebSocketHandler
                     $this->gameServer->onError($conn, $e);
                 }
             },
-            function ($frame) use ($conn, $out, $in) {
+            function ($frame) use ($conn, $out) {
                 $opcode = $frame->getOpcode();
                 if ($opcode === Frame::OP_PING) {
                     $pong = new Frame($frame->getPayload(), true, Frame::OP_PONG);
