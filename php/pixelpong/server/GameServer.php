@@ -33,13 +33,13 @@ class GameServer
     {
         $frameEncoder = new JsonFrameEncoder($this->frameBuffer);
         $playerConnection = new ActivePlayerConnection($frameEncoder);
-        $this->connections->attach($conn, $playerConnection);
+        $this->connections->offsetSet($conn, $playerConnection);
         $conn->send($frameEncoder->encodeFrameInfo($this->frameBuffer));
     }
 
     public function onClose(WebSocketConnection $conn): void
     {
-        $this->connections->detach($conn);
+        $this->connections->offsetUnset($conn);
     }
 
     public function onError(WebSocketConnection $conn, \Throwable $e): void

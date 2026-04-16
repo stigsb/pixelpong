@@ -8,6 +8,7 @@ use Ratchet\RFC6455\Handshake\ServerNegotiator;
 use Ratchet\RFC6455\Messaging\CloseFrameChecker;
 use Ratchet\RFC6455\Messaging\Frame;
 use Ratchet\RFC6455\Messaging\MessageBuffer;
+use React\EventLoop\Loop;
 use React\Http\Message\Response;
 use React\Stream\CompositeStream;
 use React\Stream\ThroughStream;
@@ -68,9 +69,13 @@ class WebSocketHandler
             $this->gameServer->onClose($conn);
         });
 
-        $this->gameServer->onOpen($conn);
-
         $body = new CompositeStream($out, $in);
+
+        // Defer onOpen to the next tick so react/http has time to set up
+        // stream piping before GameServer writes frameInfo to $out
+        Loop::futureTick(function () use ($conn) {
+            $this->gameServer->onOpen($conn);
+        });
 
         return new Response(
             101,
