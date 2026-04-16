@@ -2,7 +2,8 @@
   "name": "stigsb/pixelpong",
   "description": "HackRockheim Pong Game",
   "require": {
-    "cboden/ratchet": "^0.4.4",
+    "react/http": "^1.11",
+    "ratchet/rfc6455": "^0.3",
     "php-di/php-di": "^7.0"
   },
   "require-dev": {

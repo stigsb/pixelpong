@@ -1,8 +1,6 @@
 <?php
 
-
 namespace stigsb\pixelpong\server;
-
 
 class Event
 {
@@ -26,23 +24,14 @@ class Event
     const AXIS_RIGHT        = 1;
     const AXIS_NEUTRAL      = 0;
 
-    /** @var int */
-    public $device;
+    public int $device;
+    public int $eventType;
+    public int $value;
 
-    /** @var int */
-    public $eventType;
-
-    /** @var int */
-    public $value;
-
-    /**
-     * @param string $device
-     */
-    public function __construct($device, $type, $value)
+    public function __construct(int $device, int $type, int $value)
     {
         $this->device = $device;
         $this->eventType = $type;
         $this->value = $value;
     }
-
 }
