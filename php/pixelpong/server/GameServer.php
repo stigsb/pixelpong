@@ -37,8 +37,8 @@ class GameServer implements MessageComponentInterface
         $this->frameBuffer = $frameBuffer;
         $this->container = $container;
         $this->connections = new \SplObjectStorage();
-        $fps = (double)$container->get('server.fps');
-        $this->update_timer = $this->loop->addPeriodicTimer(1.0/$fps, [$this, 'onFrameUpdate']);
+        $fps = (float)$container->get('server.fps');
+        $this->updateTimer = $this->loop->addPeriodicTimer(1.0/$fps, [$this, 'onFrameUpdate']);
         $this->switchToGameLoop($container->get(TestImageScreen::class));
     }
 
@@ -51,7 +51,7 @@ class GameServer implements MessageComponentInterface
     {
         $frameEncoder = new JsonFrameEncoder($this->frameBuffer);
 //        $frameEncoder = new AsciiFrameEncoder($this->frameBuffer);
-        $playerConnection = new ActivePlayerPlayerConnection($frameEncoder);
+        $playerConnection = new ActivePlayerConnection($frameEncoder);
         $this->connections->attach($conn, $playerConnection);
         foreach ($this->connections as $conn) {
             /** @var PlayerConnection $playerConnection */

@@ -1,55 +1,42 @@
 <?php
 
-
 namespace stigsb\pixelpong\server;
-
 
 use stigsb\pixelpong\frame\FrameEncoder;
 
-class ActivePlayerPlayerConnection implements PlayerConnection
+class ActivePlayerConnection implements PlayerConnection
 {
-    /** @var FrameEncoder */
-    private $frameEncoder;
-
-    /** @var bool */
-    private $inputEnabled;
-
-    /** @var bool */
-    private $outputEnabled;
+    private FrameEncoder $frameEncoder;
+    private bool $inputEnabled = false;
+    private bool $outputEnabled = false;
 
     public function __construct(FrameEncoder $frameEncoder)
     {
         $this->frameEncoder = $frameEncoder;
-        $this->inputEnabled = false;
-        $this->outputEnabled = false;
     }
 
-    /**
-     * @return FrameEncoder
-     */
-    public function getFrameEncoder()
+    public function getFrameEncoder(): FrameEncoder
     {
         return $this->frameEncoder;
     }
 
-    public function setInputEnabled($enabled)
+    public function setInputEnabled(bool $enabled): void
     {
         $this->inputEnabled = $enabled;
     }
 
-    public function setOutputEnabled($enabled)
+    public function setOutputEnabled(bool $enabled): void
     {
         $this->outputEnabled = $enabled;
     }
 
-    public function isInputEnabled()
+    public function isInputEnabled(): bool
     {
         return $this->inputEnabled;
     }
 
-    public function isOutputEnabled()
+    public function isOutputEnabled(): bool
     {
         return $this->outputEnabled;
     }
-
 }
